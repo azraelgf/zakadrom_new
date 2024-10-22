@@ -457,6 +457,7 @@ textarea.input {
 .border-gradient:before,
 .our-cases__item .video-block__inner:before {
   content: "";
+  pointer-events: none;
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -735,8 +736,10 @@ textarea.input {
   height: 3rem;
   bottom: 4%;
   right: 2%;
+  z-index: 5;
   border-radius: 50%;
-  background: var(--linear-main)
+  background: var(--linear-main);
+  border: 1px solid var(--secondary)
 }
 .widget-phone img {
   width: 1.5625rem
@@ -785,6 +788,26 @@ textarea.input {
 }
 .widget-contacts__item img {
   width: .8125rem
+}
+.widget-up {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  bottom: 11%;
+  z-index: 5;
+  right: 2%;
+  border-radius: 50%;
+  border: 1px solid var(--secondary);
+  opacity: 0;
+  pointer-events: none;
+  transition: all .3s ease-in-out
+}
+.widget-up.visible {
+  opacity: 1;
+  pointer-events: auto
 }
 .header {
   position: absolute;
@@ -5870,6 +5893,9 @@ textarea.input {
   }
   .widget-phone {
     display: none
+  }
+  .widget-up {
+    bottom: 7%
   }
   .submenu-wrapper {
     padding: 5rem 1rem 3.125rem
