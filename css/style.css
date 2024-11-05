@@ -372,6 +372,33 @@ textarea.input {
   border-radius: 1.25rem;
   aspect-ratio: 16/9
 }
+.breadcrumbs {
+  margin-top: 6.875rem;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: auto
+}
+.breadcrumbs__list {
+  display: flex
+}
+.breadcrumbs__item {
+  line-height: 1.25
+}
+.breadcrumbs__current {
+  color: var(--secondary)
+}
+.breadcrumbs__link {
+  opacity: .5;
+  display: flex;
+  align-items: center
+}
+.breadcrumbs__link::after {
+  content: "";
+  font-size: .5rem;
+  -webkit-transform: rotate(-90deg);
+  transform: rotate(-90deg);
+  margin: 0 1.25em
+}
 .spollers {
   display: grid;
   max-width: 75rem;
@@ -1312,7 +1339,8 @@ textarea.input {
 .our-cases__items {
   display: grid
 }
-.our-cases__item:nth-child(2) {
+.our-cases__item:last-child,
+.our-cases__item:nth-child(even) {
   display: flex;
   gap: 1.875rem
 }
@@ -1322,11 +1350,12 @@ textarea.input {
   justify-content: center
 }
 .item-case {
+  flex: 1 1 50%;
   display: flex;
   align-items: center;
   gap: 1.875rem
 }
-.our-cases__item:last-child .item-case {
+.our-cases__item:nth-child(3n) .item-case {
   flex-direction: row-reverse
 }
 .item-case__video {
@@ -5087,7 +5116,8 @@ textarea.input {
   .brand__item:first-child {
     grid-column: span 2
   }
-  .our-cases__item:nth-child(2) .item-case {
+  .our-cases__item:last-child .item-case,
+  .our-cases__item:nth-child(even) .item-case {
     flex-direction: column;
     align-items: flex-start
   }
@@ -5906,7 +5936,8 @@ textarea.input {
   .form-feedback__form {
     flex: 1 1 100%
   }
-  .our-cases__item:nth-child(2) {
+  .our-cases__item:last-child,
+  .our-cases__item:nth-child(even) {
     flex-wrap: wrap;
     gap: 2.5rem
   }
