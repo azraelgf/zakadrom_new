@@ -791,6 +791,206 @@
             }
             videoInit(".video-block__value");
         }
+        class Popup {
+            constructor(options) {
+                let config = {
+                    logging: true,
+                    init: true,
+                    attributeOpenButton: "data-popup",
+                    attributeCloseButton: "data-close",
+                    fixElementSelector: "[data-lp]",
+                    youtubeAttribute: "data-popup-youtube",
+                    youtubePlaceAttribute: "data-popup-youtube-place",
+                    setAutoplayYoutube: true,
+                    classes: {
+                        popup: "popup",
+                        popupContent: "popup__content",
+                        popupActive: "popup_show",
+                        bodyActive: "popup-show"
+                    },
+                    focusCatch: true,
+                    closeEsc: true,
+                    bodyLock: true,
+                    hashSettings: {
+                        location: true,
+                        goHash: true
+                    },
+                    on: {
+                        beforeOpen: function() {},
+                        afterOpen: function() {},
+                        beforeClose: function() {},
+                        afterClose: function() {}
+                    }
+                };
+                this.youTubeCode;
+                this.isOpen = false;
+                this.targetOpen = {
+                    selector: false,
+                    element: false
+                };
+                this.previousOpen = {
+                    selector: false,
+                    element: false
+                };
+                this.lastClosed = {
+                    selector: false,
+                    element: false
+                };
+                this._dataValue = false;
+                this.hash = false;
+                this._reopen = false;
+                this._selectorOpen = false;
+                this.lastFocusEl = false;
+                this._focusEl = [ "a[href]", 'input:not([disabled]):not([type="hidden"]):not([aria-hidden])', "button:not([disabled]):not([aria-hidden])", "select:not([disabled]):not([aria-hidden])", "textarea:not([disabled]):not([aria-hidden])", "area[href]", "iframe", "object", "embed", "[contenteditable]", '[tabindex]:not([tabindex^="-"])' ];
+                this.options = {
+                    ...config,
+                    ...options,
+                    classes: {
+                        ...config.classes,
+                        ...options?.classes
+                    },
+                    hashSettings: {
+                        ...config.hashSettings,
+                        ...options?.hashSettings
+                    },
+                    on: {
+                        ...config.on,
+                        ...options?.on
+                    }
+                };
+                this.bodyLock = false;
+                this.options.init ? this.initPopups() : null;
+            }
+            initPopups() {
+                this.eventsPopup();
+            }
+            eventsPopup() {
+                document.addEventListener("click", function(e) {
+                    const buttonOpen = e.target.closest(`[${this.options.attributeOpenButton}]`);
+                    if (buttonOpen) {
+                        e.preventDefault();
+                        this._dataValue = buttonOpen.getAttribute(this.options.attributeOpenButton) ? buttonOpen.getAttribute(this.options.attributeOpenButton) : "error";
+                        this.youTubeCode = buttonOpen.getAttribute(this.options.youtubeAttribute) ? buttonOpen.getAttribute(this.options.youtubeAttribute) : null;
+                        if (this._dataValue !== "error") {
+                            if (!this.isOpen) this.lastFocusEl = buttonOpen;
+                            this.targetOpen.selector = `${this._dataValue}`;
+                            this._selectorOpen = true;
+                            this.open();
+                            return;
+                        } else this.popupLogging(`Йой, не заполнен атрибут у ${buttonOpen.classList}`);
+                        return;
+                    }
+                    const buttonClose = e.target.closest(`[${this.options.attributeCloseButton}]`);
+                    if (buttonClose || !e.target.closest(`.${this.options.classes.popupContent}`) && this.isOpen) {
+                        e.preventDefault();
+                        this.close();
+                        return;
+                    }
+                }.bind(this));
+                document.addEventListener("keydown", function(e) {
+                    if (this.options.closeEsc && e.which == 27 && e.code === "Escape" && this.isOpen) {
+                        e.preventDefault();
+                        this.close();
+                        return;
+                    }
+                    if (this.options.focusCatch && e.which == 9 && this.isOpen) {
+                        this._focusCatch(e);
+                        return;
+                    }
+                }.bind(this));
+                if (this.options.hashSettings.goHash) {
+                    window.addEventListener("hashchange", function() {
+                        if (window.location.hash) this._openToHash(); else this.close(this.targetOpen.selector);
+                    }.bind(this));
+                    window.addEventListener("load", function() {
+                        if (window.location.hash) this._openToHash();
+                    }.bind(this));
+                }
+            }
+            open(selectorValue) {
+                if (bodyLockStatus) {
+                    this.bodyLock = document.documentElement.classList.contains("lock") && !this.isOpen ? true : false;
+                    if (selectorValue && typeof selectorValue === "string" && selectorValue.trim() !== "") {
+                        this.targetOpen.selector = selectorValue;
+                        this._selectorOpen = true;
+                    }
+                    if (this.isOpen) {
+                        this._reopen = true;
+                        this.close();
+                    }
+                    if (!this._selectorOpen) this.targetOpen.selector = this.lastClosed.selector;
+                    if (!this._reopen) this.previousActiveElement = document.activeElement;
+                    this.targetOpen.element = document.querySelector(this.targetOpen.selector);
+                    if (this.targetOpen.element) {
+                        if (this.youTubeCode) {
+                            const codeVideo = this.youTubeCode;
+                            const urlVideo = `https://www.youtube.com/embed/${codeVideo}?rel=0&showinfo=0&autoplay=1`;
+                            const iframe = document.createElement("iframe");
+                            iframe.setAttribute("allowfullscreen", "");
+                            const autoplay = this.options.setAutoplayYoutube ? "autoplay;" : "";
+                            iframe.setAttribute("allow", `${autoplay}; encrypted-media`);
+                            iframe.setAttribute("src", urlVideo);
+                            if (!this.targetOpen.element.querySelector(`[${this.options.youtubePlaceAttribute}]`)) this.popupLogging(`Ошибка, не найден атрибут ${this.options.youtubePlaceAttribute}`); else this.targetOpen.element.querySelector(`[${this.options.youtubePlaceAttribute}]`).appendChild(iframe);
+                        }
+                        this.options.on.beforeOpen(this);
+                        this.targetOpen.element.classList.add(this.options.classes.popupActive);
+                        document.body.classList.add(this.options.classes.bodyActive);
+                        this.isOpen = true;
+                        if (this.bodyLock) bodyLock();
+                        this._setFocusTrap();
+                        this.targetOpen.element.setAttribute("aria-hidden", "false");
+                        this.options.on.afterOpen(this);
+                    } else this.popupLogging(`Ошибка, не найден ${this.targetOpen.selector}`);
+                    this._reopen = false;
+                    this._selectorOpen = false;
+                }
+            }
+            close(selectorValue) {
+                if (this.isOpen) {
+                    this.bodyLock = document.documentElement.classList.contains("lock") && this.isOpen ? true : false;
+                    this.options.on.beforeClose(this);
+                    if (selectorValue && typeof selectorValue === "string" && selectorValue.trim() !== "") this.targetOpen.selector = selectorValue;
+                    this.targetOpen.element = document.querySelector(this.targetOpen.selector);
+                    if (this.targetOpen.element) {
+                        this.targetOpen.element.classList.remove(this.options.classes.popupActive);
+                        document.body.classList.remove(this.options.classes.bodyActive);
+                        if (this.bodyLock) bodyUnlock();
+                        this.isOpen = false;
+                        this.targetOpen.element.setAttribute("aria-hidden", "true");
+                        this.options.on.afterClose(this);
+                        this.lastClosed.selector = this.targetOpen.selector;
+                    }
+                }
+            }
+            _openToHash() {
+                const hash = window.location.hash.replace("#", "");
+                const buttons = document.querySelector(`[${this.options.attributeOpenButton}="${hash}"]`);
+                if (buttons) this.open(hash);
+            }
+            _setFocusTrap() {
+                const focusable = this.targetOpen.element.querySelectorAll(this._focusEl);
+                if (focusable.length) focusable[0].focus();
+            }
+            _focusCatch(e) {
+                const focusable = this.targetOpen.element.querySelectorAll(this._focusEl);
+                const firstFocusable = focusable[0];
+                const lastFocusable = focusable[focusable.length - 1];
+                if (e.shiftKey) {
+                    if (document.activeElement === firstFocusable) {
+                        lastFocusable.focus();
+                        e.preventDefault();
+                    }
+                } else if (document.activeElement === lastFocusable) {
+                    firstFocusable.focus();
+                    e.preventDefault();
+                }
+            }
+            popupLogging(message) {
+                if (this.options.logging) console.log(`[Попап]: ${message}`);
+            }
+        }
+        const popups = new Popup({});
+        modules_flsModules.popup = popups;
         let gotoblock_gotoBlock = (targetBlock, noHeader = false, speed = 500, offsetTop = 0) => {
             const targetBlockElement = document.querySelector(targetBlock);
             if (targetBlockElement) {
@@ -4604,6 +4804,10 @@
                 activeMenu ? activeMenu.classList.remove("open-submenu") : null;
             }
             if (window.matchMedia("(max-width: 991.98px)").matches) if (targetElement.closest(".title-submenu._no-link")) targetElement.nextElementSibling.classList.add("submenu-open");
+            if (targetElement.closest(".popup_no-lock .popup__close")) {
+                const activePopup = document.querySelector(".popup_show");
+                activePopup ? activePopup.classList.remove("popup_show") : null;
+            }
         }
         if (window.matchMedia("(min-width: 991.98px)").matches) {
             const menuItems = document.querySelectorAll(".menu__item.has-submenu > a");
@@ -4677,6 +4881,14 @@
             if (scrollTop > lastScrollTop && scrollTop > 500) myElement.classList.add("visible"); else if (scrollTop < lastScrollTop && scrollTop < 500) myElement.classList.remove("visible");
             lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
         }));
+        if (document.querySelector("#popup-info")) {
+            function showPopup() {
+                document.getElementById("popup-info").classList.add("popup_show");
+            }
+            window.onload = function() {
+                setTimeout(showPopup, 5e3);
+            };
+        }
         window["FLS"] = false;
         menuInit();
         spollers();
